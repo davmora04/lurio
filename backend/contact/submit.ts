@@ -7,6 +7,7 @@ import { deliverInquiry, getDeliveryConfig, type DeliveryConfig } from "./delive
 import { GUARD, RecentSet, SlidingWindowLimiter, checkHoneypot, isTooFast } from "./guard";
 import { hasErrors, normalizeContact, validateContact, type ContactFields } from "../contracts/schema";
 import type { ContactState } from "../contracts/state";
+import { getContactStore, type ContactStore } from "./storage";
 
 export type { ContactState } from "../contracts/state";
 
@@ -17,6 +18,7 @@ export type SubmitContext = {
   fetchImpl?: typeof fetch;
   limiter: SlidingWindowLimiter;
   delivered: RecentSet;
+  store?: ContactStore | null;
 };
 
 // Shared across requests within one server instance.
@@ -24,7 +26,7 @@ const limiter = new SlidingWindowLimiter(GUARD.rateLimit.max, GUARD.rateLimit.wi
 const delivered = new RecentSet(GUARD.duplicateWindowMs);
 
 export function defaultContext(clientKey: string): SubmitContext {
-  return { clientKey, now: Date.now(), delivery: getDeliveryConfig(), limiter, delivered };
+  return { clientKey, now: Date.now(), delivery: getDeliveryConfig(), store: getContactStore(), limiter, delivered };
 }
 
 function fingerprint(fields: ContactFields): string {
@@ -51,8 +53,30 @@ export async function processContact(formData: FormData, ctx: SubmitContext): Pr
 
   if (!ctx.limiter.attempt(ctx.clientKey, ctx.now)) return { status: "error", reason: "rate_limited", values };
 
+  const submission = { ...values, submittedAt: new Date(ctx.now).toISOString() };
+  if (ctx.store) {
+    let id: string;
+    try {
+      id = await ctx.store.save(submission, ctx.delivery !== null);
+    } catch {
+      console.error("[contact] Database save failed");
+      return { status: "error", reason: "failed", values };
+    }
+    // Receipt means durable storage. Notification failure must not prompt a resubmission.
+    ctx.delivered.add(key, ctx.now);
+    if (ctx.delivery) {
+      const notification = await deliverInquiry(submission, ctx.delivery, ctx.fetchImpl);
+      try {
+        await ctx.store.markNotification(id, notification.ok ? "sent" : "failed");
+      } catch {
+        console.error("[contact] Notification status update failed");
+      }
+    }
+    return { status: "success" };
+  }
+
   const result = await deliverInquiry(
-    { ...values, submittedAt: new Date(ctx.now).toISOString() },
+    submission,
     ctx.delivery,
     ctx.fetchImpl,
   );

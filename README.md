@@ -5,8 +5,8 @@ Sitio de una página para **Lurio** (*Market Entry & Expansion Advisory · Colom
 se genera de forma estática y el formulario de contacto se procesa en la misma app mediante una Server Action.
 
 - **Stack:** Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · Vitest
-- **Sin base de datos ni servicios externos obligatorios.** El envío del formulario se conecta a un webhook o a
-  Resend mediante variables de entorno.
+- **Contactos en PostgreSQL (Neon Free).** `DATABASE_URL` activa el guardado persistente;
+  webhook y Resend son notificaciones opcionales. Sin esa variable se conserva el envío directo anterior.
 - **Idiomas:** inglés (`/en`, voz principal de la marca) y español (`/es`). Ver sección 5.
 
 ## Estructura del proyecto
@@ -68,6 +68,8 @@ Otros scripts:
 | Script | Qué hace |
 |---|---|
 | `npm run lint` | ESLint (config de Next) |
+| `npm run db:migrate` | Crea la tabla de contactos en Neon sin borrar registros existentes |
+| `npm run db:check` | Comprueba la conexión y las columnas necesarias sin leer datos de contactos |
 | `npm run typecheck` | Genera los tipos de rutas y ejecuta `tsc --noEmit` |
 | `npm test` | Pruebas unitarias (validación, antispam, entrega, indexación, idiomas, sincronía de tokens) |
 | `npm run assets` | Regenera los activos de `frontend/public/` desde `02. MARCA/` (ver sección 7) |
@@ -79,6 +81,7 @@ Todas son opcionales para ejecutar el sitio; ninguna debe commitearse (`.env*` e
 
 | Variable | Uso |
 |---|---|
+| `DATABASE_URL` | Cadena privada de Neon PostgreSQL. Se usa exclusivamente en el servidor. |
 | `NEXT_PUBLIC_SITE_URL` | URL pública confirmada (p. ej. `https://lurio.co`). Activa canonical, sitemap, URLs absolutas de Open Graph y datos estructurados `Organization`. **Pendiente de confirmar el dominio.** |
 | `SITE_INDEXING` | `true` solo en el despliegue de producción definitivo. En cualquier otro caso se envía `noindex` y `robots.txt` bloquea todo. Los previews de Vercel nunca se indexan. |
 | `CONTACT_WEBHOOK_URL` / `CONTACT_WEBHOOK_SECRET` | Destino del formulario (opción A). |
@@ -99,9 +102,28 @@ interés *Market Entry Assessment*; los CTA principales enlazan a `#contact`.
 1. Normalización y validación (misma lógica en cliente y servidor: `backend/contracts/schema.ts`).
 2. Antispam (`backend/contact/guard.ts`): campo trampa oculto, tiempo mínimo de llenado (3 s), límite de 5 envíos
    por IP cada 10 min y supresión de duplicados durante 30 min. El botón se desactiva mientras se envía.
-3. Entrega (`backend/contact/delivery.ts`). **Solo se muestra éxito si el destino responde 2xx.**
-4. Si no hay destino configurado, el visitante ve *“Our contact form isn't accepting messages right now”* sin
-   detalles técnicos.
+3. Con `DATABASE_URL`, se guarda en `contact_requests` antes de notificar. Si falla el guardado,
+   se devuelve error y se permite reintentar. Si solo falla la notificación, la solicitud sigue recibida.
+4. Sin `DATABASE_URL`, se usa la entrega anterior (`backend/contact/delivery.ts`): solo se muestra éxito
+   si el destino responde 2xx. Sin base de datos ni destino, se muestra el estado de no disponibilidad.
+
+### Configurar Neon Free
+
+1. Crea un proyecto en el plan **Free** de [Neon](https://console.neon.tech).
+2. Copia la cadena de **Connect** (con `sslmode=require`) en `frontend/.env.local`:
+   `DATABASE_URL=postgresql://...`. Nunca uses el prefijo `NEXT_PUBLIC_` ni subas este archivo a Git.
+3. Desde la raíz ejecuta `npm run db:migrate` y `npm run db:check`.
+4. Reinicia `npm run dev` y envía una solicitud de prueba. Comprueba su recepción en la tabla
+   `public.contact_requests` desde el panel de Neon.
+5. Para producción, configura `DATABASE_URL` en la plataforma de alojamiento y vuelve a desplegar.
+   Usa un proyecto o una rama de Neon diferente para pruebas si no quieres mezclar registros.
+
+La tabla guarda los campos del formulario, idioma, fecha, estado comercial (`new`, `contacted`, `closed`)
+y estado de notificación (`not_configured`, `pending`, `sent`, `failed`). No se guardan IP ni campos antispam.
+El correo/webhook es opcional: sin él, consulta las solicitudes en Neon. Los estados `failed` o `pending`
+permiten localizar notificaciones fallidas o incompletas; no hay reintentos automáticos de notificación.
+El script aplica la migración inicial idempotente de `backend/db/migrations/001_contact_requests.sql`;
+los cambios futuros de esquema necesitarán nuevas migraciones.
 
 **Opción A — webhook (CRM, Zapier/Make/n8n, relay propio).** Define `CONTACT_WEBHOOK_URL` (https) y,
 opcionalmente, `CONTACT_WEBHOOK_SECRET` (se envía como `Authorization: Bearer …`). Cuerpo JSON:
@@ -120,6 +142,15 @@ opcionalmente, `CONTACT_WEBHOOK_SECRET` (se envía como `Authorization: Bearer �
 **Opción B — correo con [Resend](https://resend.com).** Verifica el dominio remitente en Resend y define
 `RESEND_API_KEY`, `CONTACT_TO_EMAIL` (uno o varios, separados por comas) y `CONTACT_FROM_EMAIL`. El correo
 llega con `reply-to` apuntando al visitante.
+
+Para activar las notificaciones, completa estas tres variables en `frontend/.env.local` y reinicia
+`npm run dev`. El destinatario puede ser Gmail, pero el remitente debe usar un dominio verificado
+en Resend. Solo para pruebas, `Lurio <onboarding@resend.dev>` permite enviar al correo de la propia
+cuenta de Resend. No uses la contraseña de Gmail como API key.
+En producción, configura las mismas variables en el alojamiento y vuelve a desplegar.
+Después de enviar el formulario, verifica el correo y `notification_status` en Neon:
+`sent` indica aceptación por el proveedor (no confirma llegada a la bandeja), `failed` indica fallo
+y `not_configured` indica que faltaba la configuración. Los registros anteriores no se notifican automáticamente.
 
 **Límites conocidos:** el rate limit y la deduplicación viven en memoria de cada instancia. En plataformas
 serverless son una primera barrera; si aparece spam, añade un almacén compartido o un servicio antibots

@@ -37,6 +37,62 @@ beforeEach(() => {
 });
 
 describe("processContact", () => {
+  it("stores the normalized inquiry before notifying", async () => {
+    const save = vi.fn(async () => "request-id");
+    const markNotification = vi.fn(async () => {});
+    ctx.store = { save, markNotification };
+    expect(await processContact(form({ email: " ANA@COMPANY.COM ", locale: "es" }), ctx)).toEqual({ status: "success" });
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({
+      email: "ana@company.com", locale: "es", submittedAt: new Date(NOW).toISOString(),
+    }), true);
+    expect(save.mock.invocationCallOrder[0]).toBeLessThan(fetchImpl.mock.invocationCallOrder[0]);
+    expect(markNotification).toHaveBeenCalledWith("request-id", "sent");
+  });
+
+  it("accepts database-only receipt without a paid email service", async () => {
+    const save = vi.fn(async () => "request-id");
+    const markNotification = vi.fn(async () => {});
+    ctx.store = { save, markNotification };
+    ctx.delivery = null;
+    expect(await processContact(form(), ctx)).toEqual({ status: "success" });
+    expect(save).toHaveBeenCalledWith(expect.anything(), false);
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(markNotification).not.toHaveBeenCalled();
+  });
+
+  it("does not notify or claim receipt when storage fails, and permits a retry", async () => {
+    const save = vi.fn().mockRejectedValueOnce(new Error("connection failed")).mockResolvedValue("request-id");
+    ctx.store = { save, markNotification: vi.fn() };
+    expect(await processContact(form(), ctx)).toMatchObject({ status: "error", reason: "failed" });
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(await processContact(form(), ctx)).toEqual({ status: "success" });
+  });
+
+  it("retains successful receipt and suppresses resubmission after a notification failure", async () => {
+    const save = vi.fn(async () => "request-id");
+    const markNotification = vi.fn(async () => {});
+    ctx.store = { save, markNotification };
+    fetchImpl.mockResolvedValueOnce(new Response(null, { status: 503 }));
+    expect(await processContact(form(), ctx)).toEqual({ status: "success" });
+    expect(markNotification).toHaveBeenCalledWith("request-id", "failed");
+    expect(await processContact(form(), ctx)).toEqual({ status: "duplicate" });
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
+  it("still confirms receipt when the notification status cannot be updated", async () => {
+    ctx.store = { save: vi.fn(async () => "request-id"), markNotification: vi.fn().mockRejectedValue(new Error("offline")) };
+    expect(await processContact(form(), ctx)).toEqual({ status: "success" });
+  });
+
+  it("does not store invalid or spam submissions", async () => {
+    const save = vi.fn();
+    ctx.store = { save, markNotification: vi.fn() };
+    await processContact(form({ email: "invalid" }), ctx);
+    await processContact(form({ website: "spam" }), ctx);
+    await processContact(form({ startedAt: String(NOW) }), ctx);
+    expect(save).not.toHaveBeenCalled();
+  });
+
   it("delivers a valid inquiry and reports success only after the destination confirms", async () => {
     expect(await processContact(form(), ctx)).toEqual({ status: "success" });
     expect(fetchImpl).toHaveBeenCalledTimes(1);

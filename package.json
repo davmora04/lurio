@@ -7,11 +7,15 @@
     "build": "next build frontend",
     "start": "next start frontend",
     "lint": "eslint",
-    "typecheck": "next typegen frontend && tsc --noEmit -p frontend/tsconfig.json",
+    "typecheck": "next typegen frontend && tsc --noEmit -p frontend/tsconfig.json && tsc --noEmit -p backend/tsconfig.json",
     "test": "vitest run",
-    "assets": "node scripts/prepare-brand-assets.mjs"
+    "assets": "node scripts/prepare-brand-assets.mjs",
+    "db:migrate": "node scripts/database.mjs migrate",
+    "db:check": "node scripts/database.mjs check"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
+    "@next/env": "^16.3.6",
     "next": "16.3.6",
     "react": "19.2.8",
     "react-dom": "19.2.8"

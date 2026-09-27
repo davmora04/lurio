@@ -7,6 +7,7 @@ vi.mock("next/headers", () => ({
 
 beforeEach(() => {
   vi.stubEnv("NODE_ENV", "production");
+  vi.stubEnv("DATABASE_URL", "");
   vi.stubEnv("CONTACT_WEBHOOK_URL", "https://example.test/inquiries");
   vi.stubEnv("CONTACT_WEBHOOK_SECRET", "");
   vi.stubEnv("RESEND_API_KEY", "");
