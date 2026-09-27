@@ -1,0 +1,45 @@
+{
+  "brand": {
+    "colors": {
+      "midnightInk": "#0B1224",
+      "charcoal": "#2A3346",
+      "amethystViolet": "#5B3F8C",
+      "orchidGrey": "#A89DB1",
+      "parchment": "#F4EDE6",
+      "roseBeige": "#C9A292",
+      "white": "#FFFFFF"
+    },
+    "typography": {
+      "display": {
+        "family": "Playfair Display",
+        "fallback": "Georgia, 'Times New Roman', serif",
+        "weights": [
+          500,
+          600
+        ]
+      },
+      "body": {
+        "family": "Inter",
+        "fallback": "Arial, Helvetica, sans-serif",
+        "weights": [
+          400,
+          500,
+          600
+        ]
+      },
+      "wordmark": {
+        "family": "Inter",
+        "weight": 300,
+        "trackingEm": 0.28
+      }
+    },
+    "radius": {
+      "button": "999px",
+      "card": "2px"
+    },
+    "container": {
+      "maxWidth": "1280px"
+    },
+    "spacingBasePx": 8
+  }
+}

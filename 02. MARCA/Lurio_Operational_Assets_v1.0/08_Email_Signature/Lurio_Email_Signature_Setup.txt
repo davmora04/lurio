@@ -1,0 +1,1 @@
+Copy the HTML in Lurio_Email_Signature.html into your email client signature editor. Replace name, title, phone and email as needed. Do not embed font files.

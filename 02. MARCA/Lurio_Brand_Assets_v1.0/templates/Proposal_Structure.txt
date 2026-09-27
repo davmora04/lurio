@@ -1,0 +1,10 @@
+LURIO PROPOSAL STRUCTURE
+1. Client objective
+2. What we understand
+3. Recommended engagement
+4. Scope by decision/outcome
+5. Workstreams and specialists
+6. Timeline and dependencies
+7. Governance / reporting
+8. Commercial terms
+9. What happens next
