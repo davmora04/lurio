@@ -1,0 +1,193 @@
+@import "tailwindcss" source("..");
+
+/* Brand packages are reference material; keep them out of class detection. */
+@source not "../.next";
+
+/*
+ * Lurio design tokens — mirror of
+ * 02. MARCA/Lurio_Web_Developer_Handoff_v1.0/04_Design_System/brand-tokens.json
+ * (also exported for TypeScript in lib/brand.ts; tests/brand-tokens.test.ts keeps them in sync).
+ * The default Tailwind palette is removed so only official colors can be used.
+ */
+@theme {
+  --color-*: initial;
+  --color-ink: #0b1224;
+  --color-charcoal: #2a3346;
+  --color-amethyst: #5b3f8c;
+  --color-orchid: #a89db1;
+  --color-parchment: #f4ede6;
+  --color-rose: #c9a292;
+  --color-white: #ffffff;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  /* Functional UI color for form errors (not a brand color). 7.8:1 on white. */
+  --color-error: #9f1d35;
+
+  /* Wide enough for the Spanish navigation on one line. */
+  --breakpoint-nav: 72rem;
+
+  --radius-card: 2px;
+  --radius-pill: 999px;
+  --container-content: 80rem;
+  --shadow-soft: 0 18px 50px rgb(11 18 36 / 0.1);
+
+  --ease-calm: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@theme inline {
+  --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-inter), Arial, Helvetica, sans-serif;
+}
+
+/* ---------- Typography scale (DESIGN_SPEC.md) ---------- */
+
+@utility text-display-1 {
+  overflow-wrap: break-word;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(2.75rem, 5.2vw, 4.75rem);
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+@utility text-display-2 {
+  overflow-wrap: break-word;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(2rem, 3.1vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+@utility text-display-3 {
+  overflow-wrap: break-word;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(1.6rem, 2.2vw, 2.25rem);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+@utility text-lede {
+  font-size: clamp(1.125rem, 1.4vw, 1.25rem);
+  line-height: 1.6;
+}
+
+@utility eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* ---------- Base ---------- */
+
+@layer base {
+  html {
+    /* Keeps anchored section headings clear of the sticky header. */
+    scroll-padding-top: 5.5rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-white);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: var(--color-amethyst);
+    color: var(--color-white);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-amethyst);
+    outline-offset: 3px;
+  }
+
+  .on-dark :focus-visible {
+    outline-color: var(--color-orchid);
+  }
+
+  /* Light surfaces nested inside dark sections (e.g. the contact form card). */
+  .on-light :focus-visible {
+    outline-color: var(--color-amethyst);
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Playfair defaults to old-style figures ("01" reads as "OI"); use lining figures. */
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-variant-numeric: lining-nums;
+  }
+}
+
+/* ---------- Motion: calm, purposeful, optional ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  .enter {
+    animation: enter-rise 0.35s var(--ease-calm) both;
+    animation-delay: calc(var(--i, 0) * 70ms + 80ms);
+  }
+
+  /* Movement without fading, so hero text is visible (and counts for LCP) on first paint. */
+  .enter-shift {
+    animation: enter-shift 0.35s var(--ease-calm) both;
+    animation-delay: calc(var(--i, 0) * 70ms + 80ms);
+  }
+
+  .enter-image {
+    animation: enter-image 0.9s var(--ease-calm) both;
+  }
+
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
+}
+
+@keyframes enter-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
+@keyframes enter-shift {
+  from {
+    transform: translateY(0.75rem);
+  }
+}
+
+@keyframes enter-image {
+  from {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem);
+  }
+}
