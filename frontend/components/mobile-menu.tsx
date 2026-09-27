@@ -125,7 +125,7 @@ export function MobileMenu({
             </ul>
           </nav>
           <div className="mt-10">
-            <LocaleSwitcher current={lang} label={labels.language} size="lg" />
+            <LocaleSwitcher current={lang} label={labels.language} size="lg" onLocaleChange={() => close(false)} />
             <a href={cta.href} onClick={() => close(false)} className={buttonClass("primary", "mt-4 w-full")}>
               {cta.label}
             </a>

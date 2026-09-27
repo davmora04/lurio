@@ -130,8 +130,9 @@ serverless son una primera barrera; si aparece spam, añade un almacén comparti
 - **Rutas:** `/en` y `/es`, ambas generadas estáticamente (`frontend/app/[lang]/`). `/` y cualquier ruta sin prefijo
   redirigen (`frontend/proxy.ts`) al idioma elegido antes con el selector (cookie `lurio-locale`), si no al del navegador
   (`Accept-Language`) y, por defecto, a inglés.
-- **Selector EN / ES** en el header, el menú móvil y el footer. Mantiene la sección actual (`/en#about` →
-  `/es#about`) y recuerda la elección.
+- **Selector EN / ES** en el header, el menú móvil y el footer. Cambia de idioma mediante
+  navegación de cliente conservando la posición de lectura, sin reutilizar anclas anteriores
+  como `#contact`. Recuerda la elección y cierra el menú móvil al cambiar de idioma.
 - **Textos:** `frontend/content/dictionaries/en.ts` (fuente) y `frontend/content/dictionaries/es.ts`. Ambos deben tener exactamente
   la misma estructura: TypeScript y una prueba (`frontend/tests/i18n.test.ts`) fallan si falta una clave o cambia el
   número de elementos de una lista.

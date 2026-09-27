@@ -1,31 +1,31 @@
 "use client";
 
-import type { MouseEvent } from "react";
+import Link from "next/link";
 import { LOCALE_COOKIE, localeMeta, locales, type Locale } from "@/lib/i18n";
 import { cx } from "@/lib/cx";
 
 const ONE_YEAR = 60 * 60 * 24 * 365;
 
-/** Remembers the choice for "/" and keeps the current section in the other language. */
-function selectLocale(event: MouseEvent<HTMLAnchorElement>, locale: Locale) {
+/** Remembers the choice for future visits to "/". */
+function rememberLocale(locale: Locale) {
   document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=${ONE_YEAR}; samesite=lax`;
-  const link = event.currentTarget;
-  link.href = `/${locale}${window.location.hash}`;
 }
 
-/** EN / ES links. Remembers the choice for "/" and keeps the current section. */
+/** Client navigation preserves the viewport without replaying an old anchor. */
 export function LocaleSwitcher({
   current,
   label,
   className,
   size = "sm",
   tone = "light",
+  onLocaleChange,
 }: {
   current: Locale;
   label: string;
   className?: string;
   size?: "sm" | "lg";
   tone?: "light" | "dark";
+  onLocaleChange?: () => void;
 }) {
   return (
     <nav aria-label={label} className={className}>
@@ -34,13 +34,21 @@ export function LocaleSwitcher({
           const active = locale === current;
           return (
             <li key={locale}>
-              <a
+              <Link
                 href={`/${locale}`}
+                scroll={false}
                 hrefLang={localeMeta[locale].htmlLang}
                 lang={localeMeta[locale].htmlLang}
                 aria-label={localeMeta[locale].label}
                 aria-current={active ? "true" : undefined}
-                onClick={(event) => selectLocale(event, locale)}
+                onNavigate={(event) => {
+                  if (active) {
+                    event.preventDefault();
+                    return;
+                  }
+                  rememberLocale(locale);
+                  onLocaleChange?.();
+                }}
                 className={cx(
                   "inline-flex min-h-11 items-center font-semibold uppercase tracking-[0.14em] underline-offset-[6px] transition-colors duration-200",
                   tone === "light"
@@ -53,7 +61,7 @@ export function LocaleSwitcher({
                 )}
               >
                 {locale}
-              </a>
+              </Link>
             </li>
           );
         })}
