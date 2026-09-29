@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { inter, playfair } from "@/lib/fonts";
 import Link from "next/link";
 import { Wordmark } from "@/components/logo";
 import { Container, Eyebrow, buttonClass } from "@/components/ui";
@@ -8,8 +8,6 @@ import { localeMeta, locales } from "@/lib/i18n";
 import "./globals.css";
 
 // URLs outside /en and /es never reach a language layout, so this page is bilingual.
-const playfair = Playfair_Display({ subsets: ["latin"], weight: ["500"], variable: "--font-playfair", display: "swap" });
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
   title: `${getDictionary("en").notFound.metaTitle} · ${getDictionary("es").notFound.metaTitle}`,

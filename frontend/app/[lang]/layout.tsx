@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { inter, playfair } from "@/lib/fonts";
 import { notFound } from "next/navigation";
 import { getDictionary } from "@/content/dictionaries";
 import { site } from "@/content/site";
@@ -7,20 +7,6 @@ import { brandColors } from "@/lib/brand";
 import { isLocale, localeMeta, locales, type Locale } from "@/lib/i18n";
 import { getSiteUrl, isIndexingAllowed } from "@/lib/site-url";
 import "../globals.css";
-
-// Self-hosted at build time by next/font (both families are SIL Open Font License).
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["500", "600"],
-  variable: "--font-playfair",
-  display: "swap",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
 
 const siteUrl = getSiteUrl();
 const indexable = isIndexingAllowed();

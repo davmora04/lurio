@@ -194,8 +194,9 @@ serverless son una primera barrera; si aparece spam, añade un almacén comparti
 | Colores para metadatos/manifest | `frontend/lib/brand.ts` (una prueba verifica que coincide con `brand-tokens.json` y con el CSS) |
 | Iconos, manifest, robots, sitemap | `frontend/public/favicon.ico`, `frontend/public/icons/`, `frontend/app/manifest.ts`, `frontend/app/robots.ts`, `frontend/app/sitemap.ts` |
 
-Tipografías: Playfair Display (titulares) e Inter (cuerpo/UI), cargadas con `next/font/google`. Se autoalojan
-en el build (licencia SIL OFL) con `font-display: swap`.
+Tipografías: Playfair Display (titulares) e Inter (cuerpo/UI), cargadas con `next/font/local` desde
+`frontend/fonts/`. Los WOFF2 variables del subconjunto latino y sus licencias SIL OFL están incluidos
+en el repositorio; el build no descarga fuentes de Google. Ambas usan `font-display: swap`.
 
 ## 7. Activos de marca utilizados
 
