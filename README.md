@@ -239,12 +239,14 @@ propios, geografía). Se elimina borrando `<Faq />` en `frontend/app/[lang]/page
 
 La app es un único proyecto Next.js. `.vercelignore` excluye `02. MARCA/` del despliegue.
 
-**Vercel:** la estructura cambió y requiere ajustar la configuración del proyecto.
-Usa `frontend` como *Root Directory* y permite incluir archivos fuera de esa carpeta
-para que estén disponibles `backend/`, el `package.json` y el lockfile de la raíz.
-Configura la instalación como `cd .. && npm ci` y el build como `cd .. && npm run build`;
-el directorio de salida es `.next` relativo a `frontend`. No despliegues solo la carpeta
-`frontend/`. Esta configuración queda pendiente de validación en el despliegue real.
+**Vercel:** usa la raíz del repositorio como *Root Directory* (campo vacío, no `frontend`).
+`vercel.json` configura el framework Next.js, la instalación `npm ci`, la compilación
+`npm run build` y el directorio de salida `frontend/.next`. Así se incluyen también
+`backend/`, el `package.json` y el lockfile de la raíz en el mismo despliegue.
+El error `/vercel/path0/.next/routes-manifest.json couldn't be found` indica que Vercel
+buscó la salida en la raíz en lugar de `frontend/.next`. Sube `vercel.json` al repositorio,
+comprueba *Root Directory* en el panel y vuelve a desplegar el commit actualizado.
+La compilación local verifica esa ruta; el despliegue remoto requiere comprobarse en Vercel.
 Define las variables de la sección 3 en *Production*. Deja `SITE_INDEXING` vacío en *Preview*. Asigna el
 dominio y vuelve a desplegar.
 
